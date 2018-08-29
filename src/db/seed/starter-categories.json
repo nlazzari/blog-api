@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "category": "homes"
+    },
+    {
+        "id": 2,
+        "category": "interiors"
+    },
+    {
+        "id": 3,
+        "category": "travel"
+    }
+]
