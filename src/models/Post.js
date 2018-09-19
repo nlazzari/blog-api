@@ -1,7 +1,8 @@
 const Model = require('./Model');
 const slug = require('slug');
 
-const POST_SUMMARY_COLUMNS = ['title', 'subtitle', 'image', 'slug', 'author', 'created_at'];
+const POST_SUMMARY_COLUMNS = ['title', 'subtitle', 'image', 'slug', 'author', 'categories', 'created_at'];
+const POST_COLUMNS = ['title', 'subtitle', 'body', 'image', 'slug', 'author', 'categories', 'created_at'];
 
 class Post extends Model {
 	constructor(data) {
@@ -34,6 +35,15 @@ class Post extends Model {
 		if (isWildcardOrIncludes('deleted')) {
 			selects = selects.select('p.deleted AS deleted');
 		}
+		if (isWildcardOrIncludes('categories')) {
+			selects = selects.select(knex.raw(
+				`( SELECT COALESCE(json_agg(cats.category), json_build_array()) FROM (
+					SELECT cat.category FROM categories cat
+					LEFT OUTER JOIN post_category AS postcat ON cat.id = postcat.category_id
+					LEFT OUTER JOIN posts pst ON pst.id = postcat.post_id
+					WHERE pst.id = p.id	
+				) AS cats) AS "categories"`));
+		}
 		if (isWildcardOrIncludes('author')) {
 			selects = selects.select(knex.raw(
 				`json_build_object(
@@ -57,7 +67,9 @@ class Post extends Model {
 		const knex = this._db;
 		return query
 			.from(knex.raw(`posts p`))
-			.joinRaw('LEFT OUTER JOIN users AS u ON p.author_id = u.id');
+			.joinRaw('LEFT OUTER JOIN users AS u ON p.author_id = u.id')
+			.joinRaw('LEFT OUTER JOIN post_category AS pc ON p.id = pc.post_id')
+			.joinRaw('LEFT OUTER JOIN categories AS c ON c.id = pc.category_id');
 	}
 
 	static allSummaries(orderBy = 'desc') {
@@ -71,6 +83,8 @@ class Post extends Model {
 			})
 			.orderBy('created_at', orderBy)
 			.orderBy('id', orderBy)
+			.groupByRaw('p.id')
+			.groupByRaw('u.id')
 			.map((row) => new self(row));
 	}
 
@@ -79,8 +93,6 @@ class Post extends Model {
 		const self = this;
 		return Post.addTablestoQuery(
 			Post.selectColumns(POST_SUMMARY_COLUMNS))
-			.joinRaw('LEFT OUTER JOIN post_category AS pc ON p.id = pc.post_id')
-			.joinRaw('LEFT OUTER JOIN categories AS c ON c.id = pc.category_id')
 			.where({
 				published: true,
 				deleted: false,
@@ -88,6 +100,8 @@ class Post extends Model {
 			})
 			.orderBy('created_at', orderBy)
 			.orderBy('id', orderBy)
+			.groupByRaw('p.id')
+			.groupByRaw('u.id')
 			.map((row) => new self(row));
 	}
 
@@ -100,11 +114,15 @@ class Post extends Model {
 	static async getById(id, onlyFetchBody = false) {
 		const knex = this._db;
 		const self = this;
-		const columns = onlyFetchBody ? ['body'] : ['title', 'subtitle', 'body', 'image', 'slug', 'author', 'created_at'];
+		const columns = onlyFetchBody ? ['body'] : POST_COLUMNS;
 		const result = await Post.addTablestoQuery(Post.selectColumns(columns))
 			.where({ 'p.id': id })
 			.map((row) => new self(row));
-			return result && result.length && result[0];
+			if (result && result.length) {
+				return result[0];
+			} else {
+				return null;
+			}
 	}
 
 	static insert(posts) {
