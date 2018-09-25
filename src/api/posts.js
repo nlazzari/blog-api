@@ -36,9 +36,10 @@ exports.api = function(api, Post) {
 		return post;
 	}));
 
-	api.post('/v1/posts', handleRequest(async (req) => {
-		return Post.insert(req.body);
-	}));
+	// TODO: Turn on after enabling local auth - NL
+	// api.post('/v1/posts', handleRequest(async (req) => {
+	// 	return Post.insert(req.body);
+	// }));
 
 	return api;
 };
