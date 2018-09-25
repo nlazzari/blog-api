@@ -56,4 +56,22 @@ module.exports = {
 		resave: false,
 		saveUninitialized: true
 	},
+	cors: {
+		optionsAsync(req, callback) {
+			let corsOptions;
+			const corsWhitelist = [
+				`http://${process.env.FRONT_END_PRODUCTION_URL}`,
+				`http://www.${process.env.FRONT_END_PRODUCTION_URL}`,
+			];
+			if (process.env.NODE_ENV === 'production' && whitelist.includes(req.header('Origin'))) {
+				corsOptions = { origin: true }; // allow the requested origin in the CORS response
+			} else
+			if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+				corsOptions = { origin: true };
+			} else {
+				corsOptions = { origin: false } // disable CORS for this request
+			}
+			callback(null, corsOptions) // callback expects two parameters: error and options
+		}
+	},
 };
