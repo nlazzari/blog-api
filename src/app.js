@@ -31,22 +31,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(session(Object.assign(config.session, { store: new RedisStore({ client: redisClient })})));
-
-const corsWhitelist = [`http://${process.env.FRONT_END_PRODUCTION_URL}`, `http://www.react-blog.site`]
-const corsOptionsAsync = function (req, callback) {
-	let corsOptions;
-	const corsWhitelist = [
-		`http://${process.env.FRONT_END_PRODUCTION_URL}`,
-		`http://www.${process.env.FRONT_END_PRODUCTION_URL}`,
-	];
-	if (process.env.NODE_ENV === 'production' && whitelist.includes(req.header('Origin'))) {
-		corsOptions = { origin: true } // reflect (allow) the requested origin in the CORS response
-	} else {
-		corsOptions = { origin: false } // disable CORS for this request
-	}
-	callback(null, corsOptions) // callback expects two parameters: error and options
-}
-
 app.use(cors(config.cors.optionsAsync));
 
 app.use(passport.initialize());

@@ -63,7 +63,7 @@ module.exports = {
 				`http://${process.env.FRONT_END_PRODUCTION_URL}`,
 				`http://www.${process.env.FRONT_END_PRODUCTION_URL}`,
 			];
-			if (process.env.NODE_ENV === 'production' && whitelist.includes(req.header('Origin'))) {
+			if (process.env.NODE_ENV === 'production' && corsWhitelist.includes(req.header('Origin'))) {
 				corsOptions = { origin: true }; // allow the requested origin in the CORS response
 			} else
 			if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
